@@ -996,6 +996,8 @@ void libvlc_media_player_stop_async( libvlc_media_player_t *p_mi )
     vlc_player_Stop(player);
 
     vlc_player_Unlock(player);
+
+    config_AutoSaveConfigFile( p_mi );
 }
 
 int libvlc_media_player_set_renderer( libvlc_media_player_t *p_mi,
