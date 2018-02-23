@@ -66,6 +66,7 @@ src/config/help.c
 src/config/intf.c
 src/darwin/error.c
 src/extras/libc.c
+src/extras/tdestroy.c
 src/input/access.c
 src/input/decoder.c
 src/input/decoder.h

@@ -210,6 +210,7 @@ libvlccore_la_SOURCES = \
 	config/getopt.c \
 	config/vlc_getopt.h \
 	extras/libc.c \
+	extras/tdestroy.c \
 	media_source/media_source.c \
 	media_source/media_source.h \
 	media_source/media_tree.c \

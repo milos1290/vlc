@@ -500,9 +500,11 @@ void *lfind( const void *key, const void *base, size_t *nmemb,
          lfind((a),(b), &(unsigned){ (*(c) > UINT_MAX) ? UINT_MAX : *(c) }, (d),(e))
 #endif /* _WIN64 */
 
-#ifndef HAVE_TDESTROY
 void tdestroy( void *root, void (*free_node)(void *nodep) );
-#endif
+# ifndef HAVE_TDESTROY
+void vlc_tdestroy( void *, void (*)(void *) );
+#  define tdestroy vlc_tdestroy
+# endif
 
 /* Random numbers */
 #ifndef HAVE_NRAND48
