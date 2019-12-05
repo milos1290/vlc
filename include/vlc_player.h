@@ -706,6 +706,11 @@ vlc_player_SeekByTime(vlc_player_t *player, vlc_tick_t time,
                       enum vlc_player_seek_speed speed,
                       enum vlc_player_whence whence);
 
+VLC_API void
+vlc_player_SeekByTimeRange(vlc_player_t *player, vlc_tick_t time_s, vlc_tick_t time_e,
+                      enum vlc_player_seek_speed speed,
+                      enum vlc_player_whence whence);
+
 /**
  * Helper to set the absolute position precisely
  */

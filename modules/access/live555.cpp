@@ -591,7 +591,7 @@ static void continueAfterOPTIONS( RTSPClient* client, int result_code,
       result_code == 0
       && result_string != NULL
       && strstr( result_string, "GET_PARAMETER" ) != NULL;
-    client->sendDescribeCommand( continueAfterDESCRIBE );
+    client->sendDescribeCommand( &continueAfterDESCRIBE );
     delete[] result_string;
 }
 
@@ -1315,6 +1315,13 @@ static bool HasSharedSession( MediaSubsession *session )
     return b_shared;
 }
 
+static char* make_rtsp_time(char* buf, int buflen, vlc_tick_t time) {
+    time_t secs = time / 1000;
+    if (secs <= 0) return NULL;
+    strftime(buf, buflen, "%Y%m%dT%H%M%S.000Z", gmtime(&secs));
+    return buf;
+}
+
 /*****************************************************************************
  * ResumeTrack: setup or resume a silenced track
  *****************************************************************************/
@@ -1552,6 +1559,12 @@ static int Control( demux_t *p_demux, int i_query, va_list args )
             }
             return VLC_EGENERIC;
 
+        case DEMUX_GET_TIME_RANGE:
+            if ( p_sys->rtsp )
+            {
+
+            }
+            return VLC_EGENERIC;
         case DEMUX_SET_POSITION:
         case DEMUX_SET_TIME:
             if( p_sys->rtsp && (p_sys->f_npt_length > 0) )
@@ -1615,6 +1628,70 @@ static int Control( demux_t *p_demux, int i_query, va_list args )
             }
             return VLC_EGENERIC;
 
+        case DEMUX_SET_TIME_RANGE:
+            if ( p_sys->rtsp )
+            {
+
+                vlc_tick_t t_start = 0;
+                vlc_tick_t t_end = 0;
+                if ( (i_query == DEMUX_SET_TIME_RANGE) )
+                {
+                    t_start = va_arg( args, vlc_tick_t );
+                    t_end = va_arg( args, vlc_tick_t );
+                }
+                else if( i_query == DEMUX_SET_TIME )
+                    return VLC_EGENERIC;
+
+                if( p_sys->b_paused )
+                {
+                    p_sys->f_seek_request = t_start;
+                    return VLC_SUCCESS;
+                }
+
+                p_sys->rtsp->sendPauseCommand( *p_sys->ms, default_live555_callback );
+
+                if( !wait_Live555_response( p_demux ) )
+                {
+                    msg_Err( p_demux, "PAUSE before seek failed %s",
+                        p_sys->env->getResultMsg() );
+                    return VLC_EGENERIC;
+                }
+
+                char time_from[24];
+                char time_to[24];
+
+                char* start_time_c = make_rtsp_time(time_from, sizeof time_from, t_start);
+                char* end_time_c = make_rtsp_time(time_to, sizeof time_from, t_end);
+
+                p_sys->rtsp->sendPlayCommand( *p_sys->ms, default_live555_callback, start_time_c, end_time_c);
+
+                if( !wait_Live555_response( p_demux ) )
+                {
+                    msg_Err( p_demux, "seek PLAY failed %s",
+                        p_sys->env->getResultMsg() );
+                    return VLC_EGENERIC;
+                }
+                p_sys->i_pcr = VLC_TICK_INVALID;
+
+                for( int i = 0; i < p_sys->i_track; i++ )
+                {
+                    p_sys->track[i]->b_rtcp_sync = false;
+                    p_sys->track[i]->i_prevpts = VLC_TICK_INVALID;
+                    p_sys->track[i]->i_pcr = VLC_TICK_INVALID;
+                    dtsgen_Resync( &p_sys->track[i]->dtsgen );
+                }
+
+                /* Retrieve the starttime if possible */
+                p_sys->f_npt = p_sys->f_npt_start = p_sys->ms->playStartTime();
+
+                /* Retrieve the duration if possible */
+                if( p_sys->ms->playEndTime() > 0 )
+                    p_sys->f_npt_length = p_sys->ms->playEndTime();
+
+                msg_Dbg( p_demux, "seek start: %f stop:%f", p_sys->f_npt_start, p_sys->f_npt_length );
+                return VLC_SUCCESS;
+            }
+            return VLC_SUCCESS;
         /* Special for access_demux */
         case DEMUX_CAN_PAUSE:
         case DEMUX_CAN_SEEK:

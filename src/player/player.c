@@ -1411,6 +1411,29 @@ vlc_player_SeekByTime(vlc_player_t *player, vlc_tick_t time,
 }
 
 void
+vlc_player_SeekByTimeRange(vlc_player_t *player, vlc_tick_t time_s, vlc_tick_t time_e,
+                      enum vlc_player_seek_speed speed,
+                      enum vlc_player_whence whence)
+{
+    vlc_player_assert_seek_params(speed, whence);
+
+    struct vlc_player_input *input = vlc_player_get_input_locked(player);
+    if (!input)
+        return;
+
+    const int type = INPUT_CONTROL_SET_TIME_RANGE;
+    int ret = input_ControlPush(input->thread, type,
+        &(input_control_param_t) {
+            .time_range.i_val_s = time_s,
+            .time_range.i_val_e = time_e,
+            .time_range.b_fast_seek = speed == VLC_PLAYER_SEEK_FAST,
+    });
+
+    if (ret == VLC_SUCCESS)
+        vlc_player_osd_Position(player, input, time, -1, whence);
+}
+
+void
 vlc_player_SetRenderer(vlc_player_t *player, vlc_renderer_item_t *renderer)
 {
     vlc_player_assert_locked(player);

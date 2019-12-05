@@ -1141,6 +1141,20 @@ LIBVLC_API int libvlc_media_player_set_time( libvlc_media_player_t *p_mi,
                                              libvlc_time_t i_time, bool b_fast );
 
 /**
+ * Set the movie time (in absolute time). This has no effect if no media is being played.
+ * Not all formats and protocols support this.
+ *
+ * \param p_mi the Media Player
+ * \param b_fast prefer fast seeking or precise seeking
+ * \param i_time_s the movie start time (in absolute time).
+ * \param i_time_e the movie end time (in absolute time).
+ * \return 0 on success, -1 on error
+ */
+LIBVLC_API int libvlc_media_player_set_time_range( libvlc_media_player_t *p_mi, 
+                                                    libvlc_time_t i_time_s, 
+                                                    libvlc_time_t i_time_e );
+
+/**
  * Get movie position as percentage between 0.0 and 1.0.
  *
  * \param p_mi the Media Player

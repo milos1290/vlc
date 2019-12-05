@@ -833,6 +833,7 @@ vlc_player_RestartEsId
 vlc_player_Resume
 vlc_player_SeekByPos
 vlc_player_SeekByTime
+vlc_player_SeekByTimeRange
 vlc_player_SelectCategoryLanguage
 vlc_player_SelectChapter
 vlc_player_SelectChapterIdx

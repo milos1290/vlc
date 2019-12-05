@@ -178,6 +178,8 @@ enum demux_query_e
     DEMUX_GET_LENGTH,           /* arg1= vlc_tick_t *   res=    */
     DEMUX_GET_TIME,             /* arg1= vlc_tick_t *   res=    */
     DEMUX_SET_TIME,             /* arg1= vlc_tick_t arg2= bool b_precise   res=can fail    */
+    DEMUX_GET_TIME_RANGE,
+    DEMUX_SET_TIME_RANGE,       /* arg1= vlc_tick_t arg2= vlc_tick_t arg3= bool b_precise   res=can fail    */
     /* Normal or original time, used mainly by the ts module */
     DEMUX_GET_NORMAL_TIME,      /* arg1= vlc_tick_t *   res= can fail, in that case VLC_TICK_0 will be used as NORMAL_TIME */
 
@@ -403,6 +405,12 @@ static inline int demux_SetTime( demux_t *p_demux, vlc_tick_t time, bool precise
     if( time < 0 )
         time = 0;
     return demux_Control( p_demux, DEMUX_SET_TIME, time, precise );
+}
+
+static inline int demux_SetTimeRange( demux_t *p_demux, vlc_tick_t time_s, vlc_tick_t time_e, bool precise,
+                                 bool absolute )
+{
+    return demux_Control( p_demux, DEMUX_SET_TIME_RANGE, time_s, time_e, precise );
 }
 
 /**
