@@ -1344,6 +1344,25 @@ int libvlc_media_player_set_time( libvlc_media_player_t *p_mi,
     return 0;
 }
 
+int libvlc_media_player_set_time_range( libvlc_media_player_t *p_mi, 
+                                                libvlc_time_t i_time_s, 
+                                                libvlc_time_t i_time_e )
+{
+    vlc_tick_t tick_s = to_mtime(i_time_s);
+    vlc_tick_t tick_e = to_mtime(i_time_e);
+
+    vlc_player_t *player = p_mi->player;
+    vlc_player_Lock(player);
+
+    enum vlc_player_seek_speed speed = VLC_PLAYER_SEEK_FAST;
+    vlc_player_SeekByTimeRange(player, tick_s, tick_e, speed, VLC_PLAYER_WHENCE_ABSOLUTE);
+
+    vlc_player_Unlock(player);
+
+    /* may not fail anymore, keep int not to break the API */
+    return 0;
+}
+
 int libvlc_media_player_set_position( libvlc_media_player_t *p_mi,
                                        float position, bool b_fast )
 {

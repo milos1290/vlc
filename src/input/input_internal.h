@@ -395,6 +395,11 @@ typedef union
     } time;
     struct {
         bool b_fast_seek;
+        vlc_tick_t i_val_s;
+        vlc_tick_t i_val_e;
+    } time_range;
+    struct {
+        bool b_fast_seek;
         float f_val;
     } pos;
     struct
@@ -519,6 +524,8 @@ enum input_control_e
 
     INPUT_CONTROL_SET_TIME,
     INPUT_CONTROL_JUMP_TIME,
+
+    INPUT_CONTROL_SET_TIME_RANGE,
 
     INPUT_CONTROL_SET_PROGRAM,
 

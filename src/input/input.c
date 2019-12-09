@@ -1459,6 +1459,7 @@ static size_t ControlGetReducedIndexLocked( input_thread_t *p_input )
               i_ct == INPUT_CONTROL_SET_RATE ||
               i_ct == INPUT_CONTROL_SET_POSITION ||
               i_ct == INPUT_CONTROL_SET_TIME ||
+              i_ct == INPUT_CONTROL_SET_TIME_RANGE ||
               i_ct == INPUT_CONTROL_SET_PROGRAM ||
               i_ct == INPUT_CONTROL_SET_TITLE ||
               i_ct == INPUT_CONTROL_SET_SEEKPOINT ) )
@@ -1537,6 +1538,7 @@ static bool ControlIsSeekRequest( int i_type )
     case INPUT_CONTROL_SET_POSITION:
     case INPUT_CONTROL_JUMP_POSITION:
     case INPUT_CONTROL_SET_TIME:
+    case INPUT_CONTROL_SET_TIME_RANGE:
     case INPUT_CONTROL_JUMP_TIME:
     case INPUT_CONTROL_SET_TITLE:
     case INPUT_CONTROL_SET_TITLE_NEXT:
@@ -1830,7 +1832,53 @@ static bool Control( input_thread_t *p_input,
             }
             break;
         }
+        case INPUT_CONTROL_SET_TIME_RANGE:
+        {
+            const bool absolute = i_type == INPUT_CONTROL_SET_TIME_RANGE;
+            int i_ret;
 
+            if( priv->b_recording )
+            {
+                msg_Err( p_input, "INPUT_CONTROL_SET_TIME_RANGE ignored while recording" );
+                break;
+            }
+
+            /* Reset the decoders states and clock sync (before calling the demuxer */
+            es_out_Control( priv->p_es_out, ES_OUT_RESET_PCR );
+
+            i_ret = demux_SetTimeRange( priv->master->p_demux, param.time_range.i_val_e, param.time_range.i_val_e,
+                                   !param.time.b_fast_seek, absolute );
+            if( i_ret )
+            {
+                vlc_tick_t i_length;
+
+                /* Emulate it with a SET_TIME */
+                // if( !demux_Control( priv->master->p_demux,
+                //                     DEMUX_GET_LENGTH, &i_length ) && i_length > 0 )
+                // {
+                //     double f_pos = (double)param.ti / (double)i_length;
+                //     i_ret = demux_SetPosition( priv->master->p_demux, f_pos,
+                //                                !param.time.b_fast_seek,
+                //                                absolute );
+                // }
+            }
+            if( i_ret )
+            {
+                msg_Warn( p_input, "INPUT_CONTROL_SET_TIME_RANGE %s%"PRId64
+                         " failed or not possible",
+                         absolute ? "@" : param.time.i_val >= 0 ? "+" : "",
+                         param.time.i_val );
+            }
+            else
+            {
+                if( priv->i_slave > 0 )
+                    SlaveSeek( p_input );
+                priv->master->b_eof = false;
+
+                b_force_update = true;
+            }
+            break;
+        }
         case INPUT_CONTROL_SET_TIME:
         case INPUT_CONTROL_JUMP_TIME:
         {
